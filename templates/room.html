@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Game Room</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/static/favicon.svg"
+    >
+
+</head>
+
+<body data-is-host="{{ 'true' if is_host else 'false' }}">
+
+<main class="container">
+
+    <div class="card">
+
+        <h1>🎭 Game Room</h1>
+
+        <p>
+            Share this code with your friends:
+        </p>
+
+        <div class="game-code">
+            {{ game["id"] }}
+        </div>
+
+
+        <h2>👥 Players</h2>
+
+        <div
+            class="players"
+            id="players"
+        >
+
+            {% for p in players %}
+
+                <div class="player">
+
+                    <span>
+                        {{ p["name"] }}
+                    </span>
+
+                    <span>
+                        {{ p["score"] }} pts
+                    </span>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div
+            id="waiting"
+            class="waiting"
+        >
+
+            <h2>⏳ Waiting for players...</h2>
+
+            <p id="waitingMessage">
+                You need at least 2 players to start.
+            </p>
+
+            <div class="loader"></div>
+
+        </div>
+
+        <div
+            id="ready"
+            class="success"
+            style="display:none;"
+        >
+
+            <h2>🎉 Players are ready!</h2>
+
+            <p id="readyMessage">
+                Waiting for the host to start the game.
+            </p>
+
+            {% if is_host %}
+            <form
+                id="startForm"
+                action="/start/{{ game['id'] }}"
+                method="post"
+                {% if players|length < 2 %}style="display:none;"{% endif %}
+            >
+                <input
+                    type="hidden"
+                    name="player_id"
+                    value="{{ player_id }}"
+                >
+                <button type="submit" class="button">
+                    Start Game
+                </button>
+            </form>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const gameId = "{{ game['id'] }}";
+const playerId = "{{ player['id'] }}";
+
+const playersContainer =
+    document.getElementById("players");
+
+const waiting =
+    document.getElementById("waiting");
+
+const ready =
+    document.getElementById("ready");
+
+const waitingMessage =
+    document.getElementById("waitingMessage");
+
+const readyMessage =
+    document.getElementById("readyMessage");
+
+const isHost =
+    document.body.dataset.isHost === "true";
+
+const startForm =
+    document.getElementById("startForm");
+ 
+
+function connectWebSocket() {
+
+    const protocol =
+        window.location.protocol === "https:"
+            ? "wss:"
+            : "ws:";
+
+    const socket =
+        new WebSocket(
+            `${protocol}//${window.location.host}/ws/${gameId}/${playerId}`
+        );
+
+
+    socket.onmessage = function(event) {
+
+        const state = JSON.parse(event.data);
+
+        updateRoom(state);
+
+    };
+
+
+    socket.onclose = function() {
+
+        setTimeout(connectWebSocket, 2000);
+
+    };
+
+}
+
+
+async function refreshRoomState() {
+
+    try {
+
+        const response = await fetch(
+            `/game-state/${gameId}/${playerId}`,
+            { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Game state request failed (${response.status})`
+            );
+        }
+
+        updateRoom(await response.json());
+
+    } catch (error) {
+
+        console.error(
+            "Could not refresh game room state:",
+            error
+        );
+
+    }
+
+}
+
+
+function updateRoom(state) {
+
+    const players =
+        state.players || [];
+
+
+    playersContainer.innerHTML = "";
+
+
+    players.forEach(function(player) {
+
+        const playerElement =
+            document.createElement("div");
+
+        playerElement.className =
+            "player";
+
+
+        const name =
+            document.createElement("span");
+
+        name.textContent =
+            player.name;
+
+
+        const score =
+            document.createElement("span");
+
+        score.textContent =
+            `${player.score} pts`;
+
+
+        playerElement.appendChild(name);
+        playerElement.appendChild(score);
+
+        playersContainer.appendChild(
+            playerElement
+        );
+
+    });
+
+
+    if (players.length < 2) {
+
+        waiting.style.display =
+            "block";
+
+        ready.style.display =
+            "none";
+
+        waitingMessage.textContent =
+            "You need at least 2 players to start.";
+
+        return;
+
+    }
+
+
+    waiting.style.display =
+        "block";
+
+    ready.style.display =
+        "block";
+
+    const currentPath =
+        window.location.pathname +
+        window.location.search;
+
+    if (
+        ["playing", "voting", "results", "finished"].includes(state.status)
+        && state.redirect
+        && state.redirect !== currentPath
+    ) {
+        window.location.href = state.redirect;
+        return;
+    }
+
+    if (state.status === "playing") {
+
+        waitingMessage.textContent =
+            "The game is in progress.";
+
+        readyMessage.textContent =
+            "Waiting for the current player to write their statements.";
+
+        if (startForm) {
+            startForm.style.display = "none";
+        }
+
+        return;
+    }
+
+    waitingMessage.textContent =
+        "Players can join until the host starts the game.";
+
+    readyMessage.textContent = isHost
+        ? "You are the host. Start when everyone has joined."
+        : "Waiting for the host to start the game.";
+
+    if (startForm) {
+        startForm.style.display =
+            isHost ? "block" : "none";
+
+    }
+
+}
+
+
+connectWebSocket();
+refreshRoomState();
+setInterval(refreshRoomState, 3000);
+
+</script>
+
+</body>
+
+</html>

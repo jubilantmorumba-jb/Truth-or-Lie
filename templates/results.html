@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Results</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/static/favicon.svg"
+    >
+
+</head>
+
+<body>
+
+<main class="container">
+
+    <div class="card">
+
+        <h1>🏆 Results</h1>
+
+        <div class="result-box">
+
+            <h2>The Lie Was:</h2>
+
+            <p id="correctLie">
+
+                {% if round["lie"] == 1 %}
+
+                    {{ round["statement1"] }}
+
+                {% elif round["lie"] == 2 %}
+
+                    {{ round["statement2"] }}
+
+                {% else %}
+
+                    {{ round["statement3"] }}
+
+                {% endif %}
+
+            </p>
+
+        </div>
+
+
+        <h2>📊 Scoreboard</h2>
+
+        <div
+            class="players"
+            id="players"
+        >
+
+            {% for player in players %}
+
+                <div class="player">
+
+                    <span>
+                        {{ loop.index }}.
+                        {{ player["name"] }}
+                    </span>
+
+                    <strong>
+                        {{ player["score"] }} pts
+                    </strong>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div class="waiting">
+
+            <h2>⏭️ Next Round</h2>
+
+            <p id="nextMessage">
+                The next round will begin automatically...
+            </p>
+
+            <div class="loader"></div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const gameId = "{{ game }}";
+const playerId = "{{ player_id }}";
+
+
+const playersContainer =
+    document.getElementById("players");
+
+const nextMessage =
+    document.getElementById("nextMessage");
+
+let refreshTimer = null;
+
+
+function startRefreshFallback() {
+
+    if (refreshTimer !== null) {
+        return;
+    }
+
+    refreshTimer = setInterval(function() {
+
+        window.location.reload();
+
+    }, 5000);
+
+}
+
+
+function connectWebSocket() {
+
+    const protocol =
+        window.location.protocol === "https:"
+            ? "wss:"
+            : "ws:";
+
+    const socket =
+        new WebSocket(
+            `${protocol}//${window.location.host}/ws/${gameId}/${playerId}`
+        );
+
+
+    socket.onopen = function() {
+
+        if (refreshTimer !== null) {
+
+            clearInterval(refreshTimer);
+            refreshTimer = null;
+
+        }
+
+    };
+
+
+    socket.onmessage = function(event) {
+
+        const state =
+            JSON.parse(event.data);
+
+        updateResults(state);
+
+    };
+
+
+    socket.onclose = function() {
+
+        startRefreshFallback();
+
+        setTimeout(
+            connectWebSocket,
+            2000
+        );
+
+    };
+
+}
+
+
+function updateResults(state) {
+
+    const players =
+        state.players || [];
+
+
+    playersContainer.innerHTML = "";
+
+
+    players.forEach(function(player, index) {
+
+        const playerElement =
+            document.createElement("div");
+
+        playerElement.className =
+            "player";
+
+
+        const name =
+            document.createElement("span");
+
+        name.textContent =
+            `${index + 1}. ${player.name}`;
+
+
+        const score =
+            document.createElement("strong");
+
+        score.textContent =
+            `${player.score} pts`;
+
+
+        playerElement.appendChild(name);
+        playerElement.appendChild(score);
+
+        playersContainer.appendChild(
+            playerElement
+        );
+
+    });
+
+
+    if (state.status === "playing") {
+
+        nextMessage.textContent =
+            "The next player's turn is starting...";
+
+        setTimeout(function() {
+
+            window.location.href =
+                `/room/${gameId}?player_id=${playerId}`;
+
+        }, 500);
+
+    }
+
+
+    if (state.status === "finished") {
+
+        window.location.href =
+            `/final/${gameId}?player_id=${playerId}`;
+
+    }
+
+}
+
+
+connectWebSocket();
+
+</script>
+
+</body>
+
+</html>

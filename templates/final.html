@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Game Finished</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/static/favicon.svg"
+    >
+
+</head>
+
+<body>
+
+<main class="container">
+
+    <div class="card">
+
+        <h1>🏆 Game Finished!</h1>
+
+        <p>
+            Thanks for playing Truth or Lie!
+        </p>
+
+
+        <h2>Final Scores</h2>
+
+
+        <div class="players">
+
+            {% for player in players %}
+
+                <div class="player">
+
+                    <span>
+                        {{ loop.index }}.
+                        {{ player["name"] }}
+                    </span>
+
+                    <strong>
+                        {{ player["score"] }} points
+                    </strong>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        {% if players %}
+
+            <div class="result-box">
+
+                <h2>
+                    🎉 Winner
+                </h2>
+
+                <p>
+                    {{ players[0]["name"] }}
+                </p>
+
+            </div>
+
+        {% endif %}
+
+
+        <a
+            href="/"
+            class="button"
+        >
+            🏠 Back to Home
+        </a>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>

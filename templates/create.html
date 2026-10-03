@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Create Statements</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/static/favicon.svg"
+    >
+
+</head>
+
+<body>
+
+<main class="container">
+
+    <div class="card">
+
+        <h1>🎭 Truth or Lie</h1>
+
+        <h2>Your Turn!</h2>
+
+        <p>
+            Write three statements about yourself.
+        </p>
+
+        <p>
+            <strong>Two are true and one is a lie.</strong>
+        </p>
+
+        <form
+            action="/create-round/{{ game_id }}"
+            method="post"
+        >
+
+            <input
+                type="hidden"
+                name="player_id"
+                value="{{ player_id }}"
+            >
+
+            <label for="statement1">
+                Statement 1
+            </label>
+
+            <input
+                type="text"
+                id="statement1"
+                name="statement1"
+                placeholder="Write your first statement"
+                maxlength="200"
+                autocomplete="off"
+                required
+            >
+
+            <label for="statement2">
+                Statement 2
+            </label>
+
+            <input
+                type="text"
+                id="statement2"
+                name="statement2"
+                placeholder="Write your second statement"
+                maxlength="200"
+                autocomplete="off"
+                required
+            >
+
+            <label for="statement3">
+                Statement 3
+            </label>
+
+            <input
+                type="text"
+                id="statement3"
+                name="statement3"
+                placeholder="Write your third statement"
+                maxlength="200"
+                autocomplete="off"
+                required
+            >
+
+            <label for="lie">
+                Which one is the lie?
+            </label>
+
+            <select
+                id="lie"
+                name="lie"
+                required
+            >
+
+                <option value="">
+                    Select the lie
+                </option>
+
+                <option value="1">
+                    Statement 1
+                </option>
+
+                <option value="2">
+                    Statement 2
+                </option>
+
+                <option value="3">
+                    Statement 3
+                </option>
+
+            </select>
+
+            <button
+                type="submit"
+                class="button"
+            >
+                🚀 Submit Statements
+            </button>
+
+        </form>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>

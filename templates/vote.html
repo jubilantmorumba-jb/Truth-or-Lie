@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Vote</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/static/favicon.svg"
+    >
+
+</head>
+
+<body>
+
+<main class="container">
+
+    <div class="card">
+
+        <h1>🕵️ Truth or Lie?</h1>
+
+        {% if is_owner %}
+
+            <p>
+                These are your statements.
+                Wait for the other players to vote.
+            </p>
+
+        {% else %}
+
+            <p>
+                Which statement do you think is the lie?
+            </p>
+
+        {% endif %}
+
+
+        <div id="voteStatus">
+
+            {% if is_owner %}
+
+                <div class="waiting">
+                    Waiting for the other players...
+                </div>
+
+            {% elif existing_vote %}
+
+                <div class="success">
+                    ✅ Your vote has been submitted.
+                    Waiting for everyone else...
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <form
+            id="voteForm"
+            action="/vote/{{ game }}"
+            method="post"
+        >
+
+            <input
+                type="hidden"
+                name="player_id"
+                value="{{ player['id'] }}"
+            >
+
+
+            <button
+                type="submit"
+                name="vote"
+                value="1"
+                class="statement-button"
+                {% if is_owner or existing_vote %}disabled{% endif %}
+            >
+
+                <strong>
+                    Statement 1
+                </strong>
+
+                <span>
+                    {{ round["statement1"] }}
+                </span>
+
+            </button>
+
+
+            <button
+                type="submit"
+                name="vote"
+                value="2"
+                class="statement-button"
+                {% if is_owner or existing_vote %}disabled{% endif %}
+            >
+
+                <strong>
+                    Statement 2
+                </strong>
+
+                <span>
+                    {{ round["statement2"] }}
+                </span>
+
+            </button>
+
+
+            <button
+                type="submit"
+                name="vote"
+                value="3"
+                class="statement-button"
+                {% if is_owner or existing_vote %}disabled{% endif %}
+            >
+
+                <strong>
+                    Statement 3
+                </strong>
+
+                <span>
+                    {{ round["statement3"] }}
+                </span>
+
+            </button>
+
+        </form>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const gameId = "{{ game }}";
+const playerId = "{{ player['id'] }}";
+
+
+function connectWebSocket() {
+
+    const protocol =
+        window.location.protocol === "https:"
+            ? "wss:"
+            : "ws:";
+
+
+    const socket =
+        new WebSocket(
+            `${protocol}//${window.location.host}/ws/${gameId}/${playerId}`
+        );
+
+
+    socket.onmessage = function(event) {
+
+        const state =
+            JSON.parse(event.data);
+
+
+        if (state.redirect) {
+
+            const currentPath =
+                window.location.pathname +
+                window.location.search;
+
+
+            if (
+                state.redirect !== currentPath
+                && state.status !== "voting"
+            ) {
+
+                window.location.href =
+                    state.redirect;
+
+            }
+
+        }
+
+    };
+
+
+    socket.onclose = function() {
+
+        setTimeout(
+            connectWebSocket,
+            2000
+        );
+
+    };
+
+}
+
+
+connectWebSocket();
+
+</script>
+
+</body>
+
+</html>

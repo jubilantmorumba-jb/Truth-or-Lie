@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Truth or Lie</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="/static/favicon.svg"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>🎭 Truth or Lie</h1>
+
+        <p class="subtitle">
+            Create a game and challenge your friends!
+        </p>
+
+        {% if error %}
+
+            <div class="error">
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+        <section>
+
+            <h2>🚀 Create a Game</h2>
+
+            <form
+                action="/create"
+                method="post"
+            >
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Enter your name"
+                    maxlength="30"
+                    required
+                >
+
+                <button
+                    type="submit"
+                    class="button"
+                >
+                    🚀 Create Game
+                </button>
+
+            </form>
+
+        </section>
+
+        <hr>
+
+        <section>
+
+            <h2>👥 Join a Game</h2>
+
+            <p>
+                Enter the game code given to you by your friend.
+            </p>
+
+            <form id="joinForm">
+
+                <input
+                    type="text"
+                    id="gameCode"
+                    placeholder="6-digit game code"
+                    maxlength="6"
+                    required
+                    autocomplete="off"
+                >
+
+                <button
+                    type="submit"
+                    class="button"
+                >
+                    🎮 Join Game
+                </button>
+
+            </form>
+
+        </section>
+
+    </div>
+
+</div>
+
+<script>
+
+document
+    .getElementById("joinForm")
+    .addEventListener("submit", function(event) {
+
+        event.preventDefault();
+
+        const code =
+            document
+                .getElementById("gameCode")
+                .value
+                .trim()
+                .toUpperCase();
+
+        if (code.length !== 6) {
+
+            alert("Please enter a 6-character game code.");
+
+            return;
+        }
+
+        window.location.href =
+            `/join/${code}`;
+
+    });
+
+</script>
+
+</body>
+
+</html>
